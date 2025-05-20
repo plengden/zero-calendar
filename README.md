@@ -162,4 +162,4 @@ Please refer to the [contributing guide](.github/CONTRIBUTING.md).
 
 ## License
 
-Zero Calendar is open-source software licensed under the [MIT license](LICENSE.md).
+Zero Calendar is open-source software licensed under the [GPLv3 license](LICENSE.md).
