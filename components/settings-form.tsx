@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { saveUserPreferencesClient } from "@/lib/auth-client"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
-import { GoogleCalendarSync } from "@/components/google-calendar-sync"
+// Google Calendar Sync component removed
 
 const formSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
@@ -276,11 +276,7 @@ export function SettingsForm({ initialPreferences }: SettingsFormProps) {
               <div>
                 <h3 className="text-sm font-medium">Google Calendar</h3>
                 <p className="text-sm text-muted-foreground">Connected</p>
-                {user?.app_metadata?.provider === "google" && (
-                  <div className="mt-2">
-                    <GoogleCalendarSync />
-                  </div>
-                )}
+                {/* Google Calendar Sync component removed */}
               </div>
             </div>
             <Button variant="outline" size="sm">

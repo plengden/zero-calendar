@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { SearchIcon, CalendarIcon, MapPinIcon, TagIcon } from "lucide-react"
-import { type CalendarEvent, searchEvents } from "@/lib/calendar"
+import { type CalendarEvent, searchEvents } from "@/lib/calendar-supabase"
 import { format } from "date-fns"
 
 interface SearchDialogProps {
@@ -34,7 +34,7 @@ export function SearchDialog({ open, onOpenChange, onEventSelect }: SearchDialog
 
     setIsSearching(true)
     try {
-      const results = await searchEvents(session.user.id, searchQuery)
+      const results = await searchEvents(user.id, searchQuery)
       setSearchResults(results)
     } catch (error) {
       console.error("Error searching events:", error)

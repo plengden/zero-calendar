@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { getCurrentUserData } from "@/lib/auth"
 import { MultiCalendarView } from "@/components/multi-calendar-view"
-import { getEvents, getUserCategories } from "@/lib/calendar"
+import { getEvents, getUserCategories } from "@/lib/calendar-supabase"
 import { CalendarHeader } from "@/components/calendar-header"
 import { Sidebar } from "@/components/sidebar"
 

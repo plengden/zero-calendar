@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { useAuth } from "@/components/session-provider"
-import { createCalendar } from "@/lib/calendar"
+import { createCalendar } from "@/lib/calendar-supabase"
 
 type Calendar = {
   id: string
@@ -53,32 +53,24 @@ export function Sidebar() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchUserCalendars(session.user.id)
+      fetchUserCalendars(user.id)
     }
-  }, [session])
+  }, [user])
 
   const fetchUserCalendars = async (userId: string) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await fetch(`/api/calendars?userId=${userId}`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch calendars: ${response.status}`)
-      }
-
-      const data = await response.json()
-      setCalendars(data.calendars)
-    } catch (error) {
-      console.error("Failed to fetch calendars:", error)
-      setError("Failed to load calendars. Please try again.")
-
+      // For now, use default calendars since we're not storing them in DB yet
       setCalendars([
         { id: "personal", name: "Personal", color: "#3b82f6", visible: true },
         { id: "work", name: "Work", color: "#10b981", visible: true },
         { id: "family", name: "Family", color: "#8b5cf6", visible: true },
       ])
+    } catch (error) {
+      console.error("Failed to fetch calendars:", error)
+      setError("Failed to load calendars. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +81,7 @@ export function Sidebar() {
 
     try {
       const newCalendar = await createCalendar({
-        userId: session.user.id,
+        userId: user.id,
         name: newCalendarName,
         color: newCalendarColor,
       })
@@ -116,30 +108,11 @@ export function Sidebar() {
     if (!user?.id) return
 
     try {
-
-      const updatedCalendars = calendars.map((cal) => (cal.id === calendarId ? { ...cal, visible: !cal.visible } : cal))
+      // Update local state only for now
+      const updatedCalendars = calendars.map((cal) => 
+        cal.id === calendarId ? { ...cal, visible: !cal.visible } : cal
+      )
       setCalendars(updatedCalendars)
-
-
-      const response = await fetch("/api/calendars/toggle-visibility", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          calendarId,
-        }),
-      })
-
-      if (!response.ok) {
-
-        setCalendars(calendars)
-        throw new Error("Failed to toggle calendar visibility")
-      }
-
-
-      router.refresh()
     } catch (error) {
       console.error("Failed to toggle calendar visibility:", error)
       setError("Failed to update calendar visibility. Please try again.")

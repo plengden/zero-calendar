@@ -60,15 +60,27 @@ export default function SignUp() {
         throw new Error(error.message)
       }
 
-      // User data is automatically stored in user_metadata
-      // No need to create separate profile
+      if (data.user && data.session) {
+        // User is automatically signed in
+        toast({
+          title: "Account created",
+          description: "Welcome to Zero Calendar!",
+        })
 
-      toast({
-        title: "Account created",
-        description: "Please check your email to confirm your account.",
-      })
+        // Wait a moment for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Redirect to calendar
+        window.location.href = "/calendar"
+      } else {
+        // Email confirmation required
+        toast({
+          title: "Account created",
+          description: "Please check your email to confirm your account.",
+        })
 
-      router.push("/auth/signin")
+        router.push("/auth/signin")
+      }
     } catch (error: any) {
       toast({
         title: "Error",

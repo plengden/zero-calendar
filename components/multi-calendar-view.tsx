@@ -19,7 +19,7 @@ import {
   ClockIcon,
   CalendarDaysIcon,
 } from "lucide-react"
-import { type CalendarEvent, getEvents, getUserCategories, getSharedEvents } from "@/lib/calendar"
+import { type CalendarEvent, getEvents, getUserCategories, getSharedEvents } from "@/lib/calendar-supabase"
 import { EventDialog } from "./event-dialog"
 import { ChatPanel } from "./chat-panel"
 import { Input } from "@/components/ui/input"
@@ -160,12 +160,12 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
         }
 
 
-        const fetchedEvents = await getEvents(session.user.id, startDate, endDate)
+        const fetchedEvents = await getEvents(user.id, startDate, endDate)
         setEvents(fetchedEvents || [])
 
 
         try {
-          const fetchedSharedEvents = await getSharedEvents(session.user.id, startDate, endDate)
+          const fetchedSharedEvents = await getSharedEvents(user.id, startDate, endDate)
 
           const filteredSharedEvents = (fetchedSharedEvents || []).filter((event) => {
             if (!event || !event.start) return false
@@ -185,8 +185,8 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
 
 
         try {
-          const fetchedCategories = await getUserCategories(session.user.id)
-          setCategories(fetchedCategories || [])
+          const fetchedCategories = await getUserCategories(user.id)
+          setCategories(fetchedCategories?.map(cat => cat.name) || [])
         } catch (categoriesError) {
           console.error("Error fetching categories:", categoriesError)
           setCategories([])
@@ -201,7 +201,7 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
     }
 
     fetchEvents()
-  }, [currentDate, view, session, agendaRange])
+  }, [currentDate, view, user, agendaRange])
 
 
   const filteredEvents = useMemo(() => {
@@ -472,11 +472,11 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
         const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
         const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
-        const refreshedEvents = await getEvents(session.user.id, startDate, endDate)
+        const refreshedEvents = await getEvents(user.id, startDate, endDate)
         setEvents(refreshedEvents)
       }
     },
-    [currentDate, session],
+    [currentDate, user],
   )
 
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ZapIcon, SearchIcon, FilterIcon } from "lucide-react"
-import { type CalendarEvent, getEvents } from "@/lib/calendar"
+import { type CalendarEvent, getEvents } from "@/lib/calendar-supabase"
 import { EventDialog } from "./event-dialog"
 import { ChatPanel } from "./chat-panel"
 import { Input } from "@/components/ui/input"
@@ -41,11 +41,11 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
       const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
-      getEvents(session.user.id, startDate, endDate).then((fetchedEvents) => {
+      getEvents(user.id, startDate, endDate).then((fetchedEvents) => {
         setEvents(fetchedEvents)
       })
     }
-  }, [currentDate, session])
+  }, [currentDate, user])
 
   useEffect(() => {
     if (searchQuery) {
@@ -132,7 +132,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
       const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
-      const refreshedEvents = await getEvents(session.user.id, startDate, endDate)
+      const refreshedEvents = await getEvents(user.id, startDate, endDate)
       setEvents(refreshedEvents)
     }
   }

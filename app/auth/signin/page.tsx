@@ -39,7 +39,7 @@ export default function SignIn() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       })
@@ -53,7 +53,24 @@ export default function SignIn() {
         return
       }
 
-      router.push(callbackUrl)
+      if (data.user) {
+        // Wait a moment for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Check if session is properly established
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session) {
+          // Refresh the page to ensure session is properly loaded
+          window.location.href = callbackUrl
+        } else {
+          toast({
+            title: "Session Error",
+            description: "Session not established. Please try again.",
+            variant: "destructive",
+          })
+        }
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -67,12 +84,30 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?callbackUrl=${callbackUrl}`
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?callbackUrl=${callbackUrl}`
+        }
+      })
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        })
+        setIsLoading(false)
       }
-    })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
   }
 
   return (

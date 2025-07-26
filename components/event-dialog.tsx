@@ -35,7 +35,7 @@ import {
   TagIcon,
   GlobeIcon,
 } from "lucide-react"
-import { type CalendarEvent, createEvent, updateEvent, deleteEvent } from "@/lib/calendar"
+import { type CalendarEvent, createEvent, updateEvent, deleteEvent } from "@/lib/calendar-supabase"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { format, parseISO, addDays } from "date-fns"
@@ -371,7 +371,7 @@ export function EventDialog({
         end: endUTC,
         location: values.location,
         color: values.color,
-        userId: session.user.id,
+        userId: user.id,
         timezone: values.timezone,
         allDay: values.allDay,
         recurrence,
@@ -448,18 +448,18 @@ export function EventDialog({
       if (isRecurringInstance && event.originalEventId) {
         if (editOption === "this") {
 
-          await deleteEvent(session.user.id, event.id)
+          await deleteEvent(user.id, event.id)
         } else if (editOption === "all") {
 
-          await deleteEvent(session.user.id, event.originalEventId, true)
+          await deleteEvent(user.id, event.originalEventId, true)
         } else if (editOption === "future") {
 
 
-          await deleteEvent(session.user.id, event.id)
+          await deleteEvent(user.id, event.id)
         }
       } else {
 
-        await deleteEvent(session.user.id, event.id)
+        await deleteEvent(user.id, event.id)
       }
 
       toast({
