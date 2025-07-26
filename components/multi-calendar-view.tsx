@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -58,7 +58,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { NaturalLanguageEventDialog } from "./natural-language-event-dialog"
+// Natural language dialog removed - using standard event dialog
 
 
 const CALENDAR_TYPES = {
@@ -87,7 +87,7 @@ interface MultiCalendarViewProps {
 }
 
 export function MultiCalendarView({ initialEvents, initialCategories = [] }: MultiCalendarViewProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
   const [view, setView] = useState<"month" | "week" | "day" | "year" | "agenda">("month")
@@ -111,7 +111,7 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
 
 
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     const fetchEvents = async () => {
       setIsLoading(true)
@@ -468,7 +468,7 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
   const handleAIToolExecution = useCallback(
     async (result: any) => {
 
-      if (session?.user?.id) {
+      if (user?.id) {
         const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
         const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
@@ -1209,22 +1209,7 @@ export function MultiCalendarView({ initialEvents, initialCategories = [] }: Mul
         }}
       />
 
-      {/* Natural Language Event Dialog */}
-      <NaturalLanguageEventDialog
-        open={showNaturalLanguageDialog}
-        onOpenChange={setShowNaturalLanguageDialog}
-        onEventCreated={() => {
-
-          if (session?.user?.id) {
-            const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-            const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-
-            getEvents(session.user.id, startDate, endDate).then((refreshedEvents) => {
-              setEvents(refreshedEvents)
-            })
-          }
-        }}
-      />
+      {/* Natural Language Event Dialog - Removed */}
 
       {/* AI Chat Panel */}
       <ChatPanel open={showChatPanel} onOpenChange={setShowChatPanel} onToolExecution={handleAIToolExecution} />

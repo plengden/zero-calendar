@@ -1,4 +1,4 @@
-import { createServerClient, getCurrentUser } from "@/lib/supabase-auth"
+import { createServerClient, getCurrentUser } from "@/lib/supabase-server"
 import { supabase } from "@/lib/supabase-config"
 
 // User metadata types

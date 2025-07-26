@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import { saveUserPreferences } from "@/lib/auth"
+import { saveUserPreferencesClient } from "@/lib/auth-client"
 import { CalendarIcon, CheckIcon, ArrowRightIcon } from "lucide-react"
 
 interface OnboardingFlowProps {
@@ -26,7 +26,7 @@ interface OnboardingFlowProps {
 }
 
 export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [step, setStep] = useState(1)
@@ -60,11 +60,11 @@ export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
   }
 
   const handleComplete = async () => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     setIsSubmitting(true)
     try {
-      await saveUserPreferences(session.user.id, preferences)
+      await saveUserPreferencesClient(user.id, preferences)
 
       toast({
         title: "Setup complete",
@@ -349,7 +349,7 @@ export function OnboardingFlow({ open, onComplete }: OnboardingFlowProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-mono-500">Name:</span>
-                  <span>{preferences.name || session?.user?.name || "Not set"}</span>
+                  <span>{preferences.name || user?.user_metadata?.name || "Not set"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-mono-500">Timezone:</span>

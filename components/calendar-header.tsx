@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
+import { createClient } from "@/lib/supabase-client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,9 +18,15 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export function CalendarHeader() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/")
+  }
 
   return (
     <header className="border-b bg-background shadow-soft">
@@ -82,7 +89,7 @@ export function CalendarHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-lg overflow-hidden h-9 w-9">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-mono-200 dark:bg-mono-800 text-mono-900 dark:text-mono-100">
-                  {session?.user?.name?.[0] || "U"}
+                  {user?.user_metadata?.name?.[0] || user?.email?.[0] || "U"}
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -92,8 +99,8 @@ export function CalendarHeader() {
             >
               <DropdownMenuLabel className="py-2 px-3">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{session?.user?.name || "User"}</p>
-                  <p className="text-xs text-mono-500">{session?.user?.email || ""}</p>
+                  <p className="text-sm font-medium">{user?.user_metadata?.name || user?.email || "User"}</p>
+                  <p className="text-xs text-mono-500">{user?.email || ""}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-mono-200 dark:bg-mono-700" />
@@ -106,7 +113,7 @@ export function CalendarHeader() {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-mono-200 dark:bg-mono-700" />
               <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={handleSignOut}
                 className="py-2 px-3 text-sm rounded-md cursor-pointer hover:bg-mono-100 dark:hover:bg-mono-800"
               >
                 <LogOutIcon className="mr-2 h-4 w-4" />

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ interface SearchDialogProps {
 }
 
 export function SearchDialog({ open, onOpenChange, onEventSelect }: SearchDialogProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<CalendarEvent[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -30,7 +30,7 @@ export function SearchDialog({ open, onOpenChange, onEventSelect }: SearchDialog
   }, [searchQuery, open])
 
   const performSearch = async () => {
-    if (!session?.user?.id || searchQuery.length < 2) return
+    if (!user?.id || searchQuery.length < 2) return
 
     setIsSearching(true)
     try {

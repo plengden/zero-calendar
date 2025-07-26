@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -10,7 +10,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { saveUserPreferences } from "@/lib/auth"
+import { saveUserPreferencesClient } from "@/lib/auth-client"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
 import { GoogleCalendarSync } from "@/components/google-calendar-sync"
@@ -30,7 +30,7 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ initialPreferences }: SettingsFormProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { toast } = useToast()
   const { setTheme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
@@ -49,7 +49,7 @@ export function SettingsForm({ initialPreferences }: SettingsFormProps) {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!session?.user?.sub) {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to save preferences",
@@ -60,7 +60,7 @@ export function SettingsForm({ initialPreferences }: SettingsFormProps) {
 
     setIsLoading(true)
     try {
-      await saveUserPreferences(session.user.sub, values)
+      await saveUserPreferencesClient(user.id, values)
 
 
       setTheme(values.theme)
@@ -276,7 +276,7 @@ export function SettingsForm({ initialPreferences }: SettingsFormProps) {
               <div>
                 <h3 className="text-sm font-medium">Google Calendar</h3>
                 <p className="text-sm text-muted-foreground">Connected</p>
-                {session?.user?.provider === "google" && (
+                {user?.app_metadata?.provider === "google" && (
                   <div className="mt-2">
                     <GoogleCalendarSync />
                   </div>

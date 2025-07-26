@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ interface ImportExportDialogProps {
 }
 
 export function ImportExportDialog({ open, onOpenChange, onSuccess }: ImportExportDialogProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("import")
   const [file, setFile] = useState<File | null>(null)
@@ -50,7 +50,7 @@ export function ImportExportDialog({ open, onOpenChange, onSuccess }: ImportExpo
   }
 
   const handleImport = async () => {
-    if (!file || !session?.user?.id) return
+    if (!file || !user?.id) return
 
     setIsProcessing(true)
     setImportResults(null)
@@ -92,7 +92,7 @@ export function ImportExportDialog({ open, onOpenChange, onSuccess }: ImportExpo
   }
 
   const handleExport = async () => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     setIsProcessing(true)
     try {

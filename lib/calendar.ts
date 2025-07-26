@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase-config"
 import { nanoid } from "nanoid"
 import { format } from "date-fns-tz"
 import { parseISO, addMinutes } from "date-fns"
-import { createGoogleCalendarEvent, getGoogleCalendarEvents } from "./google-calendar"
+// Google Calendar integration removed - using Supabase only
 import ical from "ical-generator"
 import { v4 as uuidv4 } from "uuid"
 import { RRule } from "rrule"

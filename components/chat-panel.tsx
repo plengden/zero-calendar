@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Loader2, XCircle, DownloadIcon, X, AlertTriangle } from "lucide-react"
@@ -23,7 +23,7 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ open, onOpenChange, onToolExecution }: ChatPanelProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -87,7 +87,7 @@ export function ChatPanel({ open, onOpenChange, onToolExecution }: ChatPanelProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || !session?.user?.id) return
+    if (!input.trim() || !user?.id) return
 
     const userMessage = input.trim()
     setInput("")

@@ -24,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { createCalendar } from "@/lib/calendar"
 
 type Calendar = {
@@ -36,7 +36,7 @@ type Calendar = {
 
 export function Sidebar() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [createCalendarOpen, setCreateCalendarOpen] = useState(false)
@@ -52,7 +52,7 @@ export function Sidebar() {
 
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       fetchUserCalendars(session.user.id)
     }
   }, [session])
@@ -85,7 +85,7 @@ export function Sidebar() {
   }
 
   const handleCreateCalendar = async () => {
-    if (!newCalendarName.trim() || !session?.user?.id) return
+    if (!newCalendarName.trim() || !user?.id) return
 
     try {
       const newCalendar = await createCalendar({
@@ -113,7 +113,7 @@ export function Sidebar() {
   }
 
   const handleToggleCalendarVisibility = async (calendarId: string) => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     try {
 

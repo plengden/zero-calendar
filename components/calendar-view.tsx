@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import { useKeyboardShortcuts, type ShortcutAction } from "@/hooks/use-keyboard-shortcuts"
 import { KeyboardShortcutsDialog } from "./keyboard-shortcuts-dialog"
 import { useRouter } from "next/navigation"
-import { NaturalLanguageEventDialog } from "./natural-language-event-dialog"
+// Natural language dialog removed - using standard event dialog
 
 interface CalendarViewProps {
   initialEvents: CalendarEvent[]
@@ -23,7 +23,7 @@ interface CalendarViewProps {
 
 export function CalendarView({ initialEvents }: CalendarViewProps) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
   const [view, setView] = useState<"month" | "week" | "day">("month")
@@ -37,7 +37,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
   const [showFilterMenu, setShowFilterMenu] = useState(false)
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
@@ -128,7 +128,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
 
   const handleAIToolExecution = async (result: any) => {
 
-    if (session?.user?.id) {
+    if (user?.id) {
       const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
 
@@ -380,11 +380,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
         }}
       />
 
-      <NaturalLanguageEventDialog
-        open={showNaturalLanguageDialog}
-        onOpenChange={setShowNaturalLanguageDialog}
-        onEventCreated={handleEventCreated}
-      />
+      {/* Natural Language Event Dialog - Removed */}
 
       <ChatPanel open={showChatPanel} onOpenChange={setShowChatPanel} onToolExecution={handleAIToolExecution} />
 

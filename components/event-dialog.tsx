@@ -3,7 +3,7 @@
 import { FormDescription } from "@/components/ui/form"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/components/session-provider"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -91,7 +91,7 @@ export function EventDialog({
   onEventDeleted,
   categories = [],
 }: EventDialogProps) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [isDeleting, setIsDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -320,7 +320,7 @@ export function EventDialog({
   }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!session?.user?.id) {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to create events",
@@ -435,7 +435,7 @@ export function EventDialog({
   }
 
   const handleDelete = async () => {
-    if (!event || !session?.user?.id) return
+    if (!event || !user?.id) return
 
     if (!confirmDelete) {
       setConfirmDelete(true)
