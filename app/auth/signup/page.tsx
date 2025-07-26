@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { createClient } from "@/lib/supabase-auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -30,6 +30,7 @@ export default function SignUp() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,25 +46,26 @@ export default function SignUp() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          password: values.password,
-        }),
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.name
+          }
+        }
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong")
+      if (error) {
+        throw new Error(error.message)
       }
+
+      // User data is automatically stored in user_metadata
+      // No need to create separate profile
 
       toast({
         title: "Account created",
-        description: "Your account has been created successfully. Please sign in.",
+        description: "Please check your email to confirm your account.",
       })
 
       router.push("/auth/signin")
@@ -80,7 +82,12 @@ export default function SignUp() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn("google", { callbackUrl: "/calendar" })
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?callbackUrl=/calendar`
+      }
+    })
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { createClient } from "@/lib/supabase-auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -25,6 +25,7 @@ export default function SignIn() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/calendar"
   const { toast } = useToast()
+  const supabase = createClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,16 +39,15 @@ export default function SignIn() {
     setIsLoading(true)
 
     try {
-      const result = await signIn("credentials", {
+      const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
-        redirect: false,
       })
 
-      if (result?.error) {
+      if (error) {
         toast({
           title: "Error",
-          description: "Invalid email or password",
+          description: error.message,
           variant: "destructive",
         })
         return
@@ -67,7 +67,12 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn("google", { callbackUrl })
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?callbackUrl=${callbackUrl}`
+      }
+    })
   }
 
   return (

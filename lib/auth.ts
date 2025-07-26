@@ -1,151 +1,97 @@
-import type { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { kv } from "@/lib/kv-config"
-import bcrypt from "bcryptjs"
-import crypto from "crypto"
-import { getServerSession } from "next-auth/next"
+import { createServerClient, getCurrentUser } from "@/lib/supabase-auth"
+import { supabase } from "@/lib/supabase-config"
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      authorization: {
-        params: {
-          scope: "openid email profile https://www.googleapis.com/auth/calendar",
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await getUserByEmail(credentials.email)
-
-        if (!user) {
-          return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        }
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, account, user }) {
-      if (account) {
-        token.accessToken = account.access_token
-        token.refreshToken = account.refresh_token
-        token.expiresAt = account.expires_at
-        token.provider = account.provider
-      }
-
-      if (user) {
-        token.id = user.id
-      }
-
-      return token
-    },
-    async session({ session, token }) {
-      session.user.id = token.id as string
-      session.user.accessToken = token.accessToken as string
-      session.user.refreshToken = token.refreshToken as string
-      session.user.expiresAt = token.expiresAt as number
-      session.user.provider = token.provider as string
-      return session
-    },
-  },
-  pages: {
-    signIn: "/auth/signin",
-    signUp: "/auth/signup",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
+// User metadata types
+export interface UserMetadata {
+  name?: string
+  timezone?: string
+  google_tokens?: {
+    access_token?: string
+    refresh_token?: string
+    expires_at?: number
+  }
 }
 
+// Supabase Auth functions using user metadata
 export async function getUserByEmail(email: string) {
-  const userId = await kv.get(`email:${email}`)
-  if (!userId) return null
-
-  const user = await kv.hgetall(`user:${userId}`)
-  return user ? { ...user, id: userId } : null
+  // For email lookup, we need to use admin functions or search through auth.users
+  // This is typically not needed in most apps, but if required, use admin API
+  const { data: { users }, error } = await supabase.auth.admin.listUsers()
+  
+  if (error) return null
+  
+  const user = users.find(u => u.email === email)
+  return user || null
 }
 
-export async function createUser(name: string, email: string, password: string) {
-  const hashedPassword = await bcrypt.hash(password, 10)
-  const randomString = crypto.randomBytes(6).toString("base64url") // Generate a secure random string
-  const userId = `user_${Date.now()}_${randomString}`
+export async function getUserProfile(userId: string) {
+  const { data: { user }, error } = await supabase.auth.admin.getUserById(userId)
+  
+  if (error || !user) return null
+  return user
+}
 
-  await kv.hset(`user:${userId}`, {
-    id: userId,
-    name,
-    email,
-    password: hashedPassword,
-    createdAt: Date.now(),
+export async function updateUserProfile(userId: string, updates: UserMetadata) {
+  const { data, error } = await supabase.auth.admin.updateUserById(userId, {
+    user_metadata: updates
   })
-
-  await kv.set(`email:${email}`, userId)
-
-  return { id: userId, name, email }
+  
+  if (error) throw error
+  return data.user
 }
 
 export async function saveUserPreferences(userId: string, preferences: any) {
-
   if (!preferences.timezone) {
     try {
-
       preferences.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
     } catch (error) {
       preferences.timezone = "UTC"
     }
   }
 
-  await kv.hset(`user:${userId}`, { preferences: JSON.stringify(preferences) })
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    user_metadata: { timezone: preferences.timezone }
+  })
+
+  if (error) throw error
 }
 
 export async function getUserPreferences(userId: string) {
-  const data = await kv.hgetall(`user:${userId}`)
-  return data?.preferences ? JSON.parse(data.preferences as string) : {}
+  const { data: { user }, error } = await supabase.auth.admin.getUserById(userId)
+  
+  if (error || !user) return { timezone: 'UTC' }
+  
+  const timezone = user.user_metadata?.timezone || 'UTC'
+  return { timezone }
 }
-
 
 export async function getUserTimezone(userId: string): Promise<string> {
   try {
-    const userData = await kv.hgetall(`user:${userId}`)
-    if (userData?.preferences) {
-      const preferences = JSON.parse(userData.preferences as string)
-      return preferences.timezone || "UTC"
-    }
-    return "UTC"
+    const { data: { user }, error } = await supabase.auth.admin.getUserById(userId)
+    
+    if (error || !user) return "UTC"
+    return user.user_metadata?.timezone || "UTC"
   } catch (error) {
     console.error("Error getting user timezone:", error)
     return "UTC"
   }
 }
 
+// Helper function to get current user data with metadata
+export async function getCurrentUserData() {
+  const user = await getCurrentUser()
+  
+  if (!user) return null
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.user_metadata?.name,
+    timezone: user.user_metadata?.timezone || 'UTC',
+    googleTokens: user.user_metadata?.google_tokens
+  }
+}
 
 export async function auth() {
-  return await getServerSession(authOptions)
+  return await getCurrentUser()
 }

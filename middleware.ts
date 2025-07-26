@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
+import { createBrowserClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
 
   const protectedPaths = ["/calendar", "/settings"]
   const isPathProtected = protectedPaths.some((path) => pathname.startsWith(path))
 
   if (isPathProtected) {
-    const token = await getToken({ req: request })
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!token) {
+    if (!session) {
       const url = new URL(`/auth/signin`, request.url)
       url.searchParams.set("callbackUrl", encodeURI(pathname))
       return NextResponse.redirect(url)

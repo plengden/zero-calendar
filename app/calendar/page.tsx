@@ -1,15 +1,14 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUserData } from "@/lib/auth"
 import { MultiCalendarView } from "@/components/multi-calendar-view"
 import { getEvents, getUserCategories } from "@/lib/calendar"
 import { CalendarHeader } from "@/components/calendar-header"
 import { Sidebar } from "@/components/sidebar"
 
 export default async function CalendarPage() {
-  const session = await getServerSession(authOptions)
+  const userData = await getCurrentUserData()
 
-  if (!session) {
+  if (!userData) {
     redirect("/auth/signin")
   }
 
@@ -17,8 +16,8 @@ export default async function CalendarPage() {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 
-  const events = await getEvents(session.user.sub as string, startOfMonth, endOfMonth)
-  const categories = await getUserCategories(session.user.sub as string)
+  const events = await getEvents(userData.id, startOfMonth, endOfMonth)
+  const categories = await getUserCategories(userData.id)
 
   return (
     <div className="flex h-screen flex-col">

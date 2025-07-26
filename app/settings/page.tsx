@@ -1,18 +1,17 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUserData } from "@/lib/auth"
 import { CalendarHeader } from "@/components/calendar-header"
 import { SettingsForm } from "@/components/settings-form"
 import { getUserPreferences } from "@/lib/auth"
 
 export default async function SettingsPage() {
-  const session = await getServerSession(authOptions)
+  const userData = await getCurrentUserData()
 
-  if (!session) {
+  if (!userData) {
     redirect("/auth/signin")
   }
 
-  const preferences = await getUserPreferences(session.user.sub as string)
+  const preferences = await getUserPreferences(userData.id)
 
   return (
     <div className="flex h-screen flex-col">

@@ -1,5 +1,4 @@
-import { groq } from "@ai-sdk/groq"
-import { generateText } from "ai"
+import { openai } from "./openai-config"
 
 
 export type CalendarIntent =
@@ -130,16 +129,26 @@ IMPORTANT GUIDELINES:
 `
 
 
-      const response = await generateText({
-        model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
-        prompt: message,
-        system: systemPrompt,
+      const response = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
         temperature: 0.2,
-        maxTokens: 1000,
+        max_tokens: 1000,
       })
 
+      const responseText = response.choices[0]?.message?.content || ""
 
-      const jsonMatch = response.text.match(/\{[\s\S]*\}/)
+
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
         console.error("Failed to extract JSON from AI response")
         return { type: "other", query: message }

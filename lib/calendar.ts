@@ -1,4 +1,4 @@
-import { kv } from "@/lib/kv-config"
+import { supabase } from "@/lib/supabase-config"
 import { nanoid } from "nanoid"
 import { format } from "date-fns-tz"
 import { parseISO, addMinutes } from "date-fns"
@@ -203,8 +203,14 @@ function generateRecurringInstances(
 
 
 export async function getUserTimezone(userId: string): Promise<string> {
-  const userData = await kv.hgetall(`user:${userId}`)
-  return (userData?.timezone as string) || "UTC"
+  const { data, error } = await supabase
+    .from('users')
+    .select('timezone')
+    .eq('id', userId)
+    .single()
+  
+  if (error || !data) return "UTC"
+  return data.timezone || "UTC"
 }
 
 
@@ -291,23 +297,28 @@ function getTimezoneOffset(date: Date, timezone: string): number {
 
 export async function getEvents(userId: string, start: Date, end: Date): Promise<CalendarEvent[]> {
   try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('start_time', start.toISOString())
+      .lte('end_time', end.toISOString())
+      .order('start_time')
 
-    const events = await kv.lrange<CalendarEvent>(`user:${userId}:events`, 0, -1)
+    if (error) {
+      console.error("Error fetching events:", error)
+      return []
+    }
 
-
-    return events.filter((event) => {
-      const eventStart = new Date(event.start)
-      return eventStart >= start && eventStart <= end
-    })
+    return data || []
   } catch (error) {
     console.error("Error fetching events:", error)
-    throw new Error("Failed to fetch events")
+    return []
   }
 }
 
 export async function createEvent(event: Omit<CalendarEvent, "id">): Promise<CalendarEvent> {
   try {
-
     console.log(
       "[Calendar] Creating event with details:",
       JSON.stringify({
@@ -318,29 +329,35 @@ export async function createEvent(event: Omit<CalendarEvent, "id">): Promise<Cal
       }),
     )
 
-
     const startTime = new Date(event.start)
     const endTime = new Date(event.end)
 
     console.log("[Calendar] Start time:", startTime.toISOString())
     console.log("[Calendar] End time:", endTime.toISOString())
 
-    const newEvent: CalendarEvent = {
-      ...event,
-      id: nanoid(),
+    const { data, error } = await supabase
+      .from('events')
+      .insert({
+        user_id: event.userId,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        all_day: event.allDay,
+        color: event.color || '#3b82f6',
+        source: event.source || 'local'
+      })
+      .select()
+      .single()
 
-      start: startTime.toISOString(),
-      end: endTime.toISOString(),
+    if (error) {
+      console.error("Error creating event:", error)
+      throw new Error("Failed to create event")
     }
 
-
-    await kv.rpush(`user:${event.userId}:events`, newEvent)
-
-    console.log("[Calendar] Event created successfully:", newEvent.id)
-    console.log("[Calendar] Final start time:", newEvent.start)
-    console.log("[Calendar] Final end time:", newEvent.end)
-
-    return newEvent
+    console.log("[Calendar] Event created successfully:", data.id)
+    return data as CalendarEvent
   } catch (error) {
     console.error("Error creating event:", error)
     throw new Error("Failed to create event")

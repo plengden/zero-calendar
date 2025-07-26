@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUserData } from "@/lib/auth"
 import { CalendarHeader } from "@/components/calendar-header"
 import { Sidebar } from "@/components/sidebar"
 
 export default async function PeoplePage() {
-  const session = await getServerSession(authOptions)
+  const userData = await getCurrentUserData()
 
-  if (!session) {
+  if (!userData) {
     redirect("/auth/signin")
   }
 
